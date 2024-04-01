@@ -1,13 +1,19 @@
 package cbor
 
 import (
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io"
 	"math"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestDecode_InvalidArgument(t *testing.T) {
+	cases := []errorTest{}
 	for name, c := range map[string]struct {
 		In  []byte
 		Err string
@@ -154,6 +160,11 @@ func TestDecode_InvalidArgument(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, errorTest{
+				Description: fmt.Sprintf("TestDecode_InvalidArgument - %s - %s", name, c.Err),
+				Input:       hex.EncodeToString(c.In),
+			})
+
 			_, _, err := decode(c.In)
 			if err == nil {
 				t.Errorf("expect err %s", c.Err)
@@ -163,9 +174,12 @@ func TestDecode_InvalidArgument(t *testing.T) {
 			}
 		})
 	}
+
+	dumpErrorCases(t, "TestDecodeError_InvalidArgument", cases)
 }
 
 func TestDecode_InvalidSlice(t *testing.T) {
+	cases := []errorTest{}
 	for name, c := range map[string]struct {
 		In  []byte
 		Err string
@@ -212,6 +226,11 @@ func TestDecode_InvalidSlice(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, errorTest{
+				Description: fmt.Sprintf("TestDecode_InvalidSlice - %s - %s", name, c.Err),
+				Input:       hex.EncodeToString(c.In),
+			})
+
 			_, _, err := decode(c.In)
 			if err == nil {
 				t.Errorf("expect err %s", c.Err)
@@ -221,9 +240,12 @@ func TestDecode_InvalidSlice(t *testing.T) {
 			}
 		})
 	}
+
+	dumpErrorCases(t, "TestDecodeError_InvalidSlice", cases)
 }
 
 func TestDecode_InvalidList(t *testing.T) {
+	cases := []errorTest{}
 	for name, c := range map[string]struct {
 		In  []byte
 		Err string
@@ -246,6 +268,11 @@ func TestDecode_InvalidList(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, errorTest{
+				Description: fmt.Sprintf("TestDecode_InvalidList - %s - %s", name, c.Err),
+				Input:       hex.EncodeToString(c.In),
+			})
+
 			_, _, err := decode(c.In)
 			if err == nil {
 				t.Errorf("expect err %s", c.Err)
@@ -255,9 +282,12 @@ func TestDecode_InvalidList(t *testing.T) {
 			}
 		})
 	}
+
+	dumpErrorCases(t, "TestDecodeError_InvalidList", cases)
 }
 
 func TestDecode_InvalidMap(t *testing.T) {
+	cases := []errorTest{}
 	for name, c := range map[string]struct {
 		In  []byte
 		Err string
@@ -296,6 +326,11 @@ func TestDecode_InvalidMap(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, errorTest{
+				Description: fmt.Sprintf("TestDecode_InvalidMap - %s - %s", name, c.Err),
+				Input:       hex.EncodeToString(c.In),
+			})
+
 			_, _, err := decode(c.In)
 			if err == nil {
 				t.Errorf("expect err %s", c.Err)
@@ -305,9 +340,12 @@ func TestDecode_InvalidMap(t *testing.T) {
 			}
 		})
 	}
+
+	dumpErrorCases(t, "TestDecodeError_InvalidMap", cases)
 }
 
 func TestDecode_InvalidTag(t *testing.T) {
+	cases := []errorTest{}
 	for name, c := range map[string]struct {
 		In  []byte
 		Err string
@@ -322,6 +360,11 @@ func TestDecode_InvalidTag(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, errorTest{
+				Description: fmt.Sprintf("TestDecode_InvalidTag - %s - %s", name, c.Err),
+				Input:       hex.EncodeToString(c.In),
+			})
+
 			_, _, err := decode(c.In)
 			if err == nil {
 				t.Errorf("expect err %s", c.Err)
@@ -331,9 +374,12 @@ func TestDecode_InvalidTag(t *testing.T) {
 			}
 		})
 	}
+
+	dumpErrorCases(t, "TestDecodeError_InvalidTag", cases)
 }
 
 func TestDecode_Atomic(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -460,6 +506,12 @@ func TestDecode_Atomic(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("atomic - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -470,9 +522,12 @@ func TestDecode_Atomic(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_Atomic", cases)
 }
 
 func TestDecode_DefiniteSlice(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -487,6 +542,12 @@ func TestDecode_DefiniteSlice(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("definite slice - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -497,9 +558,12 @@ func TestDecode_DefiniteSlice(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_DefiniteSlice", cases)
 }
 
 func TestDecode_IndefiniteSlice(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -541,6 +605,12 @@ func TestDecode_IndefiniteSlice(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("indefinite slice - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -551,9 +621,12 @@ func TestDecode_IndefiniteSlice(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_IndefiniteSlice", cases)
 }
 
 func TestDecode_DefiniteString(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -568,6 +641,12 @@ func TestDecode_DefiniteString(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("definite string - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -578,9 +657,12 @@ func TestDecode_DefiniteString(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_DefiniteString", cases)
 }
 
 func TestDecode_IndefiniteString(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -622,6 +704,12 @@ func TestDecode_IndefiniteString(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("indefinite string - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -632,9 +720,12 @@ func TestDecode_IndefiniteString(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_IndefiniteString", cases)
 }
 
 func TestDecode_List(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -881,6 +972,12 @@ func TestDecode_List(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("list - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -891,9 +988,12 @@ func TestDecode_List(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_List", cases)
 }
 
 func TestDecode_Map(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -1140,6 +1240,12 @@ func TestDecode_Map(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("map - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -1150,9 +1256,12 @@ func TestDecode_Map(t *testing.T) {
 			assertValue(t, c.Expect, actual)
 		})
 	}
+
+	dumpCases(t, "TestDecode_Map", cases)
 }
 
 func TestDecode_Tag(t *testing.T) {
+	cases := []successTest{}
 	for name, c := range map[string]struct {
 		In     []byte
 		Expect Value
@@ -1199,6 +1308,12 @@ func TestDecode_Tag(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
+			cases = append(cases, successTest{
+				Description: fmt.Sprintf("tag - %s", name),
+				Input:       hex.EncodeToString(c.In),
+				Expect:      toExpect(c.Expect),
+			})
+
 			actual, n, err := decode(c.In)
 			if err != nil {
 				t.Errorf("expect no err, got %v", err)
@@ -1208,6 +1323,110 @@ func TestDecode_Tag(t *testing.T) {
 			}
 			assertValue(t, c.Expect, actual)
 		})
+	}
+
+	dumpCases(t, "TestDecode_Tag", cases)
+}
+
+func TestDecode_CollectSuccessTests(t *testing.T) {
+	entries, err := os.ReadDir("./")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []successTest{}
+	for _, e := range entries {
+		ename := e.Name()
+		if !strings.HasPrefix(ename, "TestDecode_") || !strings.HasSuffix(ename, ".json") {
+			continue
+		}
+
+		f, err := os.Open(ename)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		p, err := io.ReadAll(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var v []successTest
+		if err := json.Unmarshal(p, &v); err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Printf("append %d cases from %s\n", len(v), ename)
+		cases = append(cases, v...)
+	}
+
+	dumpCases(t, "TestDecodeSuccess", cases)
+}
+
+func TestDecode_CollectErrorTests(t *testing.T) {
+	entries, err := os.ReadDir("./")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []errorTest{}
+	for _, e := range entries {
+		ename := e.Name()
+		if !strings.HasPrefix(ename, "TestDecodeError_") || !strings.HasSuffix(ename, ".json") {
+			continue
+		}
+
+		f, err := os.Open(ename)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		p, err := io.ReadAll(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var v []errorTest
+		if err := json.Unmarshal(p, &v); err != nil {
+			t.Fatal(err)
+		}
+
+		fmt.Printf("append %d cases from %s\n", len(v), ename)
+		cases = append(cases, v...)
+	}
+
+	dumpErrorCases(t, "TestDecodeError", cases)
+}
+
+func dumpCases(t *testing.T, name string, cases []successTest) {
+	f, err := os.Create(name + ".json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p, err := json.MarshalIndent(cases, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := f.Write(p); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func dumpErrorCases(t *testing.T, name string, cases []errorTest) {
+	f, err := os.Create(name + ".json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p, err := json.MarshalIndent(cases, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := f.Write(p); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -1331,4 +1550,118 @@ func withIndefiniteMap(p []byte) []byte {
 	head := append([]byte{5<<5 | 31}, mapKeyFoo...)
 	p = append(head, p...)
 	return append(p, 0xff)
+}
+
+type errorTest struct {
+	Description string `json:"description"`
+	Input       string `json:"input"`
+}
+
+type successTest struct {
+	Description string            `json:"description"`
+	Input       string            `json:"input"`
+	Expect      successTestExpect `json:"expect"`
+}
+
+type successTestExpect struct {
+	// one of
+	Uint       *expectUint      `json:"uint,omitempty"`
+	Negint     *expectNegint    `json:"negint,omitempty"`
+	ByteString expectByteString `json:"bytestring,omitempty"`
+	String     *expectString    `json:"string,omitempty"`
+	List       expectList       `json:"list,omitempty"`
+	Map        expectMap        `json:"map,omitempty"`
+	Tag        *expectTag       `json:"tag,omitempty"`
+	Bool       *expectBool      `json:"bool,omitempty"`
+	Null       *expectNull      `json:"null,omitempty"`
+	Undefined  *expectUndefined `json:"undefined,omitempty"`
+	Float32    *expectFloat32   `json:"float32,omitempty"`
+	Float64    *expectFloat64   `json:"float64,omitempty"`
+}
+
+func toExpect(v Value) successTestExpect {
+	expect := successTestExpect{}
+	switch vv := v.(type) {
+	case Uint:
+		expect.Uint = (*expectUint)(&vv)
+	case NegInt:
+		expect.Negint = (*expectNegint)(&vv)
+	case Slice:
+		expect.ByteString = expectByteString(vv)
+	case String:
+		expect.String = (*expectString)(&vv)
+	case List:
+		expect.List = expectList{}
+		for _, vvv := range vv {
+			expect.List = append(expect.List, toExpect(vvv))
+		}
+	case Map:
+		expect.Map = expectMap{}
+		for k, vvv := range vv {
+			expect.Map[k] = toExpect(vvv)
+		}
+	case *Tag:
+		expect.Tag = &expectTag{
+			ID:    vv.ID,
+			Value: toExpect(vv.Value),
+		}
+	case Bool:
+		expect.Bool = (*expectBool)(&vv)
+	case *Nil:
+		expect.Null = &expectNull{}
+	case *Undefined:
+		expect.Undefined = &expectUndefined{}
+	case Float32:
+		expect.Float32 = (*expectFloat32)(&vv)
+	case Float64:
+		expect.Float64 = (*expectFloat64)(&vv)
+	default:
+		panic("what")
+	}
+	return expect
+}
+
+type expectUint Uint
+type expectNegint NegInt
+type expectByteString Slice
+type expectString String
+type expectList []successTestExpect
+type expectMap map[string]successTestExpect
+type expectTag struct {
+	ID    uint64            `json:"id"`
+	Value successTestExpect `json:"value"`
+}
+type expectBool Bool
+type expectNull Nil
+type expectUndefined Undefined
+type expectFloat32 Float32
+type expectFloat64 Float64
+
+func (v expectUint) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", v)), nil
+}
+func (v expectNegint) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", v-1)), nil
+}
+func (v expectByteString) MarshalJSON() ([]byte, error) {
+	p := "["
+	for i, vv := range v {
+		p += fmt.Sprintf("%d", vv)
+		if i < len(v)-1 {
+			p += ","
+		}
+	}
+	return []byte(p + "]"), nil
+}
+func (v expectNull) MarshalJSON() ([]byte, error) {
+	return []byte("{}"), nil
+}
+func (v expectUndefined) MarshalJSON() ([]byte, error) {
+	return []byte("{}"), nil
+}
+func (v expectFloat32) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", math.Float32bits(float32(v)))), nil
+}
+func (v expectFloat64) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf("%d", math.Float64bits(float64(v)))), nil
 }
