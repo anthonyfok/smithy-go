@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -163,6 +164,7 @@ func TestDecode_InvalidArgument(t *testing.T) {
 			cases = append(cases, errorTest{
 				Description: fmt.Sprintf("TestDecode_InvalidArgument - %s - %s", name, c.Err),
 				Input:       hex.EncodeToString(c.In),
+				Error:       true,
 			})
 
 			_, _, err := decode(c.In)
@@ -229,6 +231,7 @@ func TestDecode_InvalidSlice(t *testing.T) {
 			cases = append(cases, errorTest{
 				Description: fmt.Sprintf("TestDecode_InvalidSlice - %s - %s", name, c.Err),
 				Input:       hex.EncodeToString(c.In),
+				Error:       true,
 			})
 
 			_, _, err := decode(c.In)
@@ -271,6 +274,7 @@ func TestDecode_InvalidList(t *testing.T) {
 			cases = append(cases, errorTest{
 				Description: fmt.Sprintf("TestDecode_InvalidList - %s - %s", name, c.Err),
 				Input:       hex.EncodeToString(c.In),
+				Error:       true,
 			})
 
 			_, _, err := decode(c.In)
@@ -329,6 +333,7 @@ func TestDecode_InvalidMap(t *testing.T) {
 			cases = append(cases, errorTest{
 				Description: fmt.Sprintf("TestDecode_InvalidMap - %s - %s", name, c.Err),
 				Input:       hex.EncodeToString(c.In),
+				Error:       true,
 			})
 
 			_, _, err := decode(c.In)
@@ -363,6 +368,7 @@ func TestDecode_InvalidTag(t *testing.T) {
 			cases = append(cases, errorTest{
 				Description: fmt.Sprintf("TestDecode_InvalidTag - %s - %s", name, c.Err),
 				Input:       hex.EncodeToString(c.In),
+				Error:       true,
 			})
 
 			_, _, err := decode(c.In)
@@ -1555,6 +1561,7 @@ func withIndefiniteMap(p []byte) []byte {
 type errorTest struct {
 	Description string `json:"description"`
 	Input       string `json:"input"`
+	Error       bool   `json:"error"`
 }
 
 type successTest struct {
@@ -1565,18 +1572,18 @@ type successTest struct {
 
 type successTestExpect struct {
 	// one of
-	Uint       *expectUint      `json:"uint,omitempty"`
-	Negint     *expectNegint    `json:"negint,omitempty"`
-	ByteString expectByteString `json:"bytestring,omitempty"`
-	String     *expectString    `json:"string,omitempty"`
-	List       expectList       `json:"list,omitempty"`
-	Map        expectMap        `json:"map,omitempty"`
-	Tag        *expectTag       `json:"tag,omitempty"`
-	Bool       *expectBool      `json:"bool,omitempty"`
-	Null       *expectNull      `json:"null,omitempty"`
-	Undefined  *expectUndefined `json:"undefined,omitempty"`
-	Float32    *expectFloat32   `json:"float32,omitempty"`
-	Float64    *expectFloat64   `json:"float64,omitempty"`
+	Uint       *expectUint       `json:"uint,omitempty"`
+	Negint     *expectNegint     `json:"negint,omitempty"`
+	ByteString *expectByteString `json:"bytestring,omitempty"`
+	String     *expectString     `json:"string,omitempty"`
+	List       *expectList       `json:"list,omitempty"`
+	Map        *expectMap        `json:"map,omitempty"`
+	Tag        *expectTag        `json:"tag,omitempty"`
+	Bool       *expectBool       `json:"bool,omitempty"`
+	Null       *expectNull       `json:"null,omitempty"`
+	Undefined  *expectUndefined  `json:"undefined,omitempty"`
+	Float32    *expectFloat32    `json:"float32,omitempty"`
+	Float64    *expectFloat64    `json:"float64,omitempty"`
 }
 
 func toExpect(v Value) successTestExpect {
@@ -1587,19 +1594,21 @@ func toExpect(v Value) successTestExpect {
 	case NegInt:
 		expect.Negint = (*expectNegint)(&vv)
 	case Slice:
-		expect.ByteString = expectByteString(vv)
+		expect.ByteString = (*expectByteString)(&vv)
 	case String:
 		expect.String = (*expectString)(&vv)
 	case List:
-		expect.List = expectList{}
+		l := expectList{}
 		for _, vvv := range vv {
-			expect.List = append(expect.List, toExpect(vvv))
+			l = append(l, toExpect(vvv))
 		}
+		expect.List = &l
 	case Map:
-		expect.Map = expectMap{}
+		m := expectMap{}
 		for k, vvv := range vv {
-			expect.Map[k] = toExpect(vvv)
+			m[k] = toExpect(vvv)
 		}
+		expect.Map = &m
 	case *Tag:
 		expect.Tag = &expectTag{
 			ID:    vv.ID,
@@ -1664,4 +1673,20 @@ func (v expectFloat32) MarshalJSON() ([]byte, error) {
 }
 func (v expectFloat64) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("%d", math.Float64bits(float64(v)))), nil
+}
+
+func (v *expectNegint) UnmarshalJSON(p []byte) error {
+	vv, err := strconv.ParseUint(string(p), 0, 64)
+	*v = expectNegint(vv + 1)
+	return err
+}
+func (v *expectFloat32) UnmarshalJSON(p []byte) error {
+	vv, err := strconv.ParseUint(string(p), 0, 32)
+	*v = expectFloat32(math.Float32frombits(uint32(vv)))
+	return err
+}
+func (v *expectFloat64) UnmarshalJSON(p []byte) error {
+	vv, err := strconv.ParseUint(string(p), 0, 64)
+	*v = expectFloat64(math.Float64frombits(uint64(vv)))
+	return err
 }
