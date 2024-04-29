@@ -486,6 +486,10 @@ func TestDecode_Atomic(t *testing.T) {
 			[]byte{7<<5 | major7Undefined},
 			&Undefined{},
 		},
+		"float16/subnormal": {
+			[]byte{7<<5 | major7Float16, 0, 0x50},
+			Float32(math.Float32frombits(0x36a00000)),
+		},
 		"float16/+Inf": {
 			[]byte{7<<5 | major7Float16, 0x7c, 0},
 			Float32(math.Float32frombits(0x7f800000)),
@@ -502,11 +506,19 @@ func TestDecode_Atomic(t *testing.T) {
 			[]byte{7<<5 | major7Float16, 0x7c, 1},
 			Float32(math.Float32frombits(0x7f802000)),
 		},
-		"float32": {
+		"float32/1.625": {
+			[]byte{7<<5 | major7Float32, 0x3f, 0xd0, 0, 0},
+			Float32(math.Float32frombits(0x3fd00000)),
+		},
+		"float32/+Inf": {
 			[]byte{7<<5 | major7Float32, 0x7f, 0x80, 0, 0},
 			Float32(math.Float32frombits(0x7f800000)),
 		},
-		"float64": {
+		"float64/1.625": {
+			[]byte{7<<5 | major7Float64, 0x3f, 0xfa, 0, 0, 0, 0, 0, 0},
+			Float64(math.Float64frombits(0x3ffa0000_00000000)),
+		},
+		"float64/+Inf": {
 			[]byte{7<<5 | major7Float64, 0x7f, 0xf0, 0, 0, 0, 0, 0, 0},
 			Float64(math.Float64frombits(0x7ff00000_00000000)),
 		},
@@ -1650,7 +1662,7 @@ func (v expectUint) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf("%d", v)), nil
 }
 func (v expectNegint) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf("%d", v-1)), nil
+	return []byte(fmt.Sprintf("-%d", v)), nil
 }
 func (v expectByteString) MarshalJSON() ([]byte, error) {
 	p := "["
@@ -1676,8 +1688,8 @@ func (v expectFloat64) MarshalJSON() ([]byte, error) {
 }
 
 func (v *expectNegint) UnmarshalJSON(p []byte) error {
-	vv, err := strconv.ParseUint(string(p), 0, 64)
-	*v = expectNegint(vv + 1)
+	vv, err := strconv.ParseUint(string(p[1:]), 0, 64)
+	*v = expectNegint(vv)
 	return err
 }
 func (v *expectFloat32) UnmarshalJSON(p []byte) error {
