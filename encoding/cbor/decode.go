@@ -239,10 +239,8 @@ func decodeMajor7(p []byte) (Value, int, error) {
 	switch m := peekMinor(p); m {
 	case major7True, major7False:
 		return Bool(m == major7True), 1, nil
-	case major7Nil:
+	case major7Nil, major7Undefined: // we MUST deserialize undefined to nil/null per SEP
 		return &Nil{}, 1, nil
-	case major7Undefined:
-		return &Undefined{}, 1, nil
 	case major7Float16:
 		if len(p) < 3 {
 			return nil, 0, fmt.Errorf("incomplete float16 at end of buf")

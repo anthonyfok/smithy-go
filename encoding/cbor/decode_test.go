@@ -484,7 +484,7 @@ func TestDecode_Atomic(t *testing.T) {
 		},
 		"undefined": {
 			[]byte{7<<5 | major7Undefined},
-			&Undefined{},
+			&Nil{},
 		},
 		"float16/subnormal": {
 			[]byte{7<<5 | major7Float16, 0, 0x50},
@@ -842,7 +842,7 @@ func TestDecode_List(t *testing.T) {
 		},
 		"[undefined]": {
 			In:     withDefiniteList([]byte{7<<5 | major7Undefined}),
-			Expect: List{&Undefined{}},
+			Expect: List{&Nil{}},
 		},
 		"[float16/+Inf]": {
 			In:     withDefiniteList([]byte{7<<5 | major7Float16, 0x7c, 0}),
@@ -962,7 +962,7 @@ func TestDecode_List(t *testing.T) {
 		},
 		"[_ undefined]": {
 			In:     withIndefiniteList([]byte{7<<5 | major7Undefined}),
-			Expect: List{&Undefined{}},
+			Expect: List{&Nil{}},
 		},
 		"[_ float16/+Inf]": {
 			In:     withIndefiniteList([]byte{7<<5 | major7Float16, 0x7c, 0}),
@@ -1110,7 +1110,7 @@ func TestDecode_Map(t *testing.T) {
 		},
 		"{undefined}": {
 			In:     withDefiniteMap([]byte{7<<5 | major7Undefined}),
-			Expect: Map{"foo": &Undefined{}},
+			Expect: Map{"foo": &Nil{}},
 		},
 		"{float16/+Inf}": {
 			In:     withDefiniteMap([]byte{7<<5 | major7Float16, 0x7c, 0}),
@@ -1230,7 +1230,7 @@ func TestDecode_Map(t *testing.T) {
 		},
 		"{_ undefined}": {
 			In:     withIndefiniteMap([]byte{7<<5 | major7Undefined}),
-			Expect: Map{"foo": &Undefined{}},
+			Expect: Map{"foo": &Nil{}},
 		},
 		"{_ float16/+Inf}": {
 			In:     withIndefiniteMap([]byte{7<<5 | major7Float16, 0x7c, 0}),
